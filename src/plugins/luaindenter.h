@@ -30,8 +30,9 @@ public:
 	virtual bool isInvElectricCharacter(const QChar &ch) const;
 	void indentBlock(QTextDocument *doc, const QTextBlock &block, const QChar &typedChar, const TextEditor::TabSettings &tabSettings);
 protected:
-	QString getLastKeyword(QString const& line) const;
-	int getLineDelta(QString const& line) const;
+	QString getFirstKeyword(QString const& line) const;
+    QString getLastKeyword(QString const& line) const;
+    int getLineDelta(const QString& prevLine, const QString& line) const;
 };
 
 } }

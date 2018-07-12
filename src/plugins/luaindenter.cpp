@@ -30,7 +30,8 @@ static QSet<QString> const g_increaseKeywords = {
 	QStringLiteral("repeat")
 };
 static QSet<QString> const g_decreaseKeywords = {
-	
+    QStringLiteral("else"),
+    QStringLiteral("end"),
 };
 
 LuaIndenter::LuaIndenter(){}
@@ -51,17 +52,31 @@ void LuaIndenter::indentBlock(QTextDocument *doc, const QTextBlock &block, const
 	}
 	
 	QString const& previousBlockText = previousBlock.text();
-	tabSettings.indentLine(block,
-		qMax<int>(0,
-			tabSettings.indentationColumn(previousBlockText)
-			+ getLineDelta(previousBlockText)*TAB_SIZE
-		)
-	);
+    auto indent = qMax<int>(0, tabSettings.indentationColumn(previousBlockText)
+                            + getLineDelta(previousBlockText, block.text())*TAB_SIZE);
+
+	tabSettings.indentLine(block, indent);
+}
+QString LuaIndenter::getFirstKeyword(const QString &line) const
+{
+	QString firstKeyword;
+	
+	FormatToken thisToken;
+	Scanner scannerA(line.constData(),line.size());
+	while((thisToken = scannerA.read()).format() != Format_EndOfBlock)
+	{
+		if(thisToken.format() == Format_Keyword)
+        {
+			firstKeyword = scannerA.value(thisToken);
+            break;
+        }
+	}
+	return firstKeyword;
 }
 QString LuaIndenter::getLastKeyword(const QString &line) const
 {
 	QString lastKeyword;
-	
+
 	FormatToken thisToken;
 	Scanner scannerA(line.constData(),line.size());
 	while((thisToken = scannerA.read()).format() != Format_EndOfBlock)
@@ -71,28 +86,48 @@ QString LuaIndenter::getLastKeyword(const QString &line) const
 	}
 	return lastKeyword;
 }
-int LuaIndenter::getLineDelta(const QString& line) const
+int LuaIndenter::getLineDelta(const QString& prevLine, const QString& line) const
 {
-    if (line.length() == 0) return 0;
+    if (prevLine.length() == 0) return 0;
 
 	// Increase indentation sooner, if possible.
-	int index = line.length()-1;
-	while((index > 0) && line[index].isSpace())
+	int index = prevLine.length()-1;
+	while((index > 0) && prevLine[index].isSpace())
 		--index;
 	
-	if(isElectricCharacter(line[index]))
+	if(isElectricCharacter(prevLine[index]))
 		return 1;
 	
-	if(isInvElectricCharacter(line[index]))
+	if(isInvElectricCharacter(prevLine[index]))
 		return -1;
 	
-	QString const keyword = getLastKeyword(line);
-	
-	if(g_increaseKeywords.contains(keyword))
-		return 1;
-	else if(g_decreaseKeywords.contains(keyword))
-		return -1;
-	return 0;
+    int keyword_sum = 0;
+    FormatToken thisToken;
+	Scanner scannerA(prevLine.constData(),prevLine.size());
+	while((thisToken = scannerA.read()).format() != Format_EndOfBlock)
+	{
+		if(thisToken.format() == Format_Keyword)
+        {
+			auto keyword = scannerA.value(thisToken);
+            if(g_increaseKeywords.contains(keyword))
+                ++keyword_sum;
+
+            if(g_decreaseKeywords.contains(keyword))
+                --keyword_sum;
+        }
+	}
+    if(g_decreaseKeywords.contains(getFirstKeyword(line)))
+        --keyword_sum;
+
+    if (keyword_sum == 0)
+    {
+        if(g_increaseKeywords.contains(getLastKeyword(prevLine)))
+            return 1;
+        if(g_decreaseKeywords.contains(getFirstKeyword(line)))
+            return -1;
+    }
+
+    return keyword_sum;
 }
 
 } }
