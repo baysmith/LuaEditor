@@ -22,6 +22,7 @@
 #include <coreplugin/fileiconprovider.h>
 #include <utils/mimetypes/mimedatabase.h>
 #include <texteditor/texteditorconstants.h>
+#include <extensionsystem/pluginmanager.h>
 
 namespace LuaEditor { namespace Internal {
 
@@ -34,7 +35,18 @@ LuaEditorPlugin::LuaEditorPlugin()
 
 LuaEditorPlugin::~LuaEditorPlugin()
 {
+    foreach (QObject *obj, addedObjectsInReverseOrder)
+        ExtensionSystem::PluginManager::removeObject(obj);
+    qDeleteAll(addedObjectsInReverseOrder);
+    addedObjectsInReverseOrder.clear();
+
     m_instance = nullptr;
+}
+
+void LuaEditorPlugin::addAutoReleasedObject(QObject *obj)
+{
+    addedObjectsInReverseOrder.prepend(obj);
+    ExtensionSystem::PluginManager::addObject(obj);
 }
 
 bool LuaEditorPlugin::initialize(const QStringList &arguments, QString *errorString)
