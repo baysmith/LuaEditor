@@ -35,7 +35,7 @@ LuaHighlighter::LuaHighlighter()
                    << TextEditor::C_COMMENT
                    << TextEditor::C_TEXT
                    << TextEditor::C_VISUAL_WHITESPACE
-                   << TextEditor::C_STRING;
+                   << TextEditor::C_JS_IMPORT_VAR;
     }
 
     setTextFormatCategories(12, [](int i){
@@ -51,7 +51,7 @@ LuaHighlighter::LuaHighlighter()
             case LuaEditor::Internal::Format_Comment: return TextEditor::C_COMMENT;
             case LuaEditor::Internal::Format_Identifier: return TextEditor::C_TEXT;
             case LuaEditor::Internal::Format_Whitespace: return TextEditor::C_VISUAL_WHITESPACE;
-            case LuaEditor::Internal::Format_RequiredModule: return TextEditor::C_STRING;
+            case LuaEditor::Internal::Format_RequiredModule: return TextEditor::C_JS_IMPORT_VAR;
             default: return TextEditor::C_TEXT;
         }
     });
@@ -65,7 +65,7 @@ void LuaHighlighter::highlightBlock(QString const& text)
     setCurrentBlockState(highlightLine(text, initialState));
 }
 
-static bool isImportKeyword(QString const& keyword)
+static bool isRequire(QString const& keyword)
 {
     return keyword == QLatin1String("require");
 }
@@ -76,22 +76,19 @@ int LuaHighlighter::highlightLine(QString const& text, int initialState)
     scanner.setState(initialState);
 
     FormatToken tk;
-    bool hasOnlyWhitespace = true;
     while((tk = scanner.read()).format() != Format_EndOfBlock)
     {
         Format format = tk.format();
-        if(format == Format_Keyword) {
-            if(isImportKeyword(scanner.value(tk)) && hasOnlyWhitespace)
+        if(format == Format_Identifier) {
+            if(isRequire(scanner.value(tk)))
             {
-                setFormat(tk.begin(), tk.length(), formatForCategory(format));
+                setFormat(tk.begin(), tk.length(), formatForCategory(Format_Keyword));
                 highlightImport(scanner);
                 break;
             }
         }
 
         setFormat(tk.begin(), tk.length(), formatForCategory(format));
-        if(format != Format_Whitespace)
-            hasOnlyWhitespace = false;
     }
     return scanner.state();
 }
@@ -102,7 +99,7 @@ void LuaHighlighter::highlightImport(Scanner& scanner)
     while((tk = scanner.read()).format() != Format_EndOfBlock)
     {
         Format format = tk.format();
-        if(format == Format_Identifier)
+        if(format == Format_Identifier || format == Format_String)
             format = Format_RequiredModule;
         setFormat(tk.begin(), tk.length(), formatForCategory(format));
     }
