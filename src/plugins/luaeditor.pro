@@ -4,9 +4,9 @@ CONFIG += c++11
 
 # DEFINES += ALLOW_LOGGING
 
-INCLUDEPATH += "/z/dev/lua-5.2.3/src"
+INCLUDEPATH += "/z/work/LuaEditor/lua-5.2.3/src"
 
-LIBS += -L/z/dev/lua-5.2.3/src -llua -L/mingw64/bin
+LIBS += -L/z/work/LuaEditor/lua-5.2.3/src -llua -L/mingw64/bin
 
 SOURCES += luaeditorplugin.cpp \
     luahoverhandler.cpp \
@@ -53,7 +53,7 @@ HEADERS += luaeditorplugin.h \
 
 ## set the QTC_SOURCE environment variable to override the setting here
 QTCREATOR_SOURCES = $$(QTC_SOURCE)
-isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES="/tools/git-sdk-64/usr/src/MINGW-packages/mingw-w64-qt-creator/src/qt-creator-opensource-src-4.7.0"
+isEmpty(QTCREATOR_SOURCES):QTCREATOR_SOURCES="/software/git-sdk-64/usr/src/MINGW-packages/mingw-w64-qt-creator/src/qt-creator-opensource-src-4.9.0"
 
 ## set the QTC_BUILD environment variable to override the setting here
 IDE_BUILD_TREE = $$(QTC_BUILD)

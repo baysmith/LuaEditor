@@ -34,15 +34,15 @@ static QSet<QString> const g_decreaseKeywords = {
     QStringLiteral("end"),
 };
 
-LuaIndenter::LuaIndenter(){}
+LuaIndenter::LuaIndenter(QTextDocument *doc) : TextEditor::TextIndenter(doc) {}
 LuaIndenter::~LuaIndenter(){}
 
 bool LuaIndenter::isElectricCharacter(QChar const& ch) const { return ch == QLatin1Char('{') || ch == QLatin1Char('='); }
 bool LuaIndenter::isInvElectricCharacter(QChar const&) const { return false; }
-void LuaIndenter::indentBlock(QTextDocument *doc, const QTextBlock &block, const QChar &typedChar, const TextEditor::TabSettings &tabSettings)
+void LuaIndenter::indentBlock(const QTextBlock &block, const QChar &typedChar, const TextEditor::TabSettings &tabSettings, int cursorPositionInEditor)
 {
-	Q_UNUSED(doc);
 	Q_UNUSED(typedChar);
+	Q_UNUSED(cursorPositionInEditor);
 	
 	QTextBlock previousBlock = block.previous();
 	if(!previousBlock.isValid())
